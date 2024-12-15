@@ -1,13 +1,15 @@
-#![feature(adt_const_params)]
+
 #![feature(generic_const_exprs)]
-#![feature(nonzero_internals)]
 #![feature(trait_upcasting)]
-#![feature(never_type)]
+#![allow(dead_code)]
+#![feature(trait_alias)]
+#![feature(adt_const_params)]
 
 mod ops;
 mod set;
 mod algebraic_objects;
 mod util;
+mod mod_ints;
 
 #[cfg(test)]
 mod tests {

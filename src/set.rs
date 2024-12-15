@@ -1,4 +1,4 @@
-mod cardinality {
+pub mod cardinality {
     use std::cmp::Ordering;
     use std::fmt::{self, Display, Formatter};
     
@@ -41,8 +41,9 @@ mod cardinality {
 }
 
 use cardinality::*;
+use std::collections::HashSet;
 
-pub trait Set<T> {
+pub trait SetT<T> {
     fn contains(&self, element: T) -> bool;
     fn is_empty(&self) -> bool {
         false
@@ -52,29 +53,7 @@ pub trait Set<T> {
     fn iter(&self) -> Iter<T> {
         unimplemented!("Implement this for your set type")
     }
-
-    fn is_subset_of(&self, other: &dyn Set<T>) -> bool {
-        if self.cardinality() >= other.cardinality() {
-            return false;
-        }
-        
-        self.iter().all(|x| other.contains(x))
-    }
 }
-
-// TODO: Rework sets.
-// fn equivalent_sets<A,B>(a: &dyn Set<A>, b: &dyn Set<B>) -> bool {
-//     if a.cardinality() == 0 && b.cardinality() == 0 {
-//         return true;
-//     } else {
-//         equivalent_sets_helper(a, b)
-//     }
-// }
-
-// fn equivalent_sets_helper<A>(a: &dyn Set<A>, b: &dyn Set<A>) -> bool {
-//     a.is_subset_of(b) && b.is_subset_of(a)
-// }
-
 
 
 struct Iter<T> {
@@ -110,7 +89,7 @@ mod small_set {
         }
     }
     
-    impl<T: Eq> Set<T> for FiniteSet<T> {
+    impl<T: Eq> SetT<T> for FiniteSet<T> {
         fn contains(&self, element: T) -> bool {
             self.elements.contains(&element)
         }
@@ -127,7 +106,6 @@ mod small_set {
     }
 }
 
-
 mod predicate_set {
     use std::usize;
 
@@ -143,7 +121,7 @@ mod predicate_set {
         }
     }
     
-    impl<T> Set<T> for PredicateSet<T> {
+    impl<T> SetT<T> for PredicateSet<T> {
         fn contains(&self, element: T) -> bool {
             (self.predicate)(element)
         }
@@ -159,13 +137,12 @@ mod predicate_set {
     }
 }
 
-
 mod hash_set {
     use super::*;
     use std::collections::HashSet;
     use std::hash::Hash;
 
-    impl<T: Eq + Hash> Set<T> for HashSet<T>{
+    impl<T: Eq + Hash> SetT<T> for HashSet<T>{
         fn contains(&self, element: T) -> bool {
             self.contains(&element)
         }
@@ -179,7 +156,6 @@ mod hash_set {
         }
     }
 }
-
 
 mod universe {
     // For now this always returns true, but when used in an algebraic object, the type of T will be constrained, and it will act as a universal set for that type.
@@ -195,7 +171,7 @@ mod universe {
         }
     }
 
-    impl<T: Eq> Set<T> for Universe<T> {
+    impl<T: Eq> SetT<T> for Universe<T> {
         fn contains(&self, _element: T) -> bool {
             true
         }
@@ -206,27 +182,6 @@ mod universe {
 
         fn cardinality(&self) -> Cardinality {
             self.cardinality
-        }
-    }
-}
-
-
-mod empty_set {
-    use super::*;
-    pub type EmptySet = !;
-
-
-    impl<T: Eq> Set<T> for EmptySet {
-        fn contains(&self, _element: T) -> bool {
-            false
-        }
-
-        fn is_empty(&self) -> bool {
-            true
-        }
-
-        fn cardinality(&self) -> Cardinality {
-            Cardinality::Finite(0)
         }
     }
 }
@@ -257,8 +212,8 @@ mod tests {
         set.insert(1);
         set.insert(2);
         set.insert(3);
-        assert!(Set::contains(&set, 1));
-        assert!(!Set::contains(&set, 4));
+        assert!(SetT::contains(&set, 1));
+        assert!(!SetT::contains(&set, 4));
     }
 
     #[test]
