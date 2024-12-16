@@ -4,12 +4,14 @@
 #![allow(dead_code)]
 #![feature(trait_alias)]
 #![feature(adt_const_params)]
+#![feature(lazy_get)]
 
-mod ops;
-mod set;
-mod algebraic_objects;
+pub mod ops;
+pub mod set;
+pub mod algebraic_objects;
 mod util;
-mod mod_ints;
+pub mod mod_ints;
+pub mod permutations;
 
 #[cfg(test)]
 mod tests {

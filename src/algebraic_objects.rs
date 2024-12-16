@@ -1,9 +1,9 @@
-use crate::{ops::*, set::{self, *, cardinality::Cardinality}, util::*};
+use crate::{ops::*, set::{self, *, Cardinality}, util::*};
 use std::rc::Rc;
 use std::marker::PhantomData;
 
 
-trait HasSet<T> {
+pub trait HasSet<T> {
     fn get_set(&self) -> Rc<dyn SetT<T>>;
     
     fn is_subset_of(&self, other: &dyn HasSet<T>) -> bool {
@@ -13,7 +13,7 @@ trait HasSet<T> {
     }
 }
 
-trait GroupLike<O: OpFlag, T>: HasSet<T> + Sized
+pub trait GroupLike<O: OpFlag, T>: HasSet<T> + Sized
 where T: Op<O>
 {
     fn try_new(set: Rc<dyn SetT<T>>) -> Result<Self, &'static str>;
@@ -26,6 +26,8 @@ use magma::*;
 use semigroup::*;
 use monoid::*;
 use group::*;
+
+pub use group::{Group, GroupT};
 
 // MARK: MAGMA
 mod magma {
@@ -78,11 +80,12 @@ mod magma {
     impl<O: OpFlag, T> MagmaT<O, T> for Magma<O, T> where T: Op<O> {}
 }
 
+
 // MARK: SEMIGROUP
 mod semigroup {
     use super::*;
 
-    pub trait SemigroupElement<O: OpFlag> = Associative<O> + PartialEq + Copy;
+    pub trait SemigroupElement<O: OpFlag> = Associative<O> + PartialEq;
 
     pub struct Semigroup<O: OpFlag, T>
     where T: SemigroupElement<O>
@@ -132,11 +135,12 @@ mod semigroup {
     impl<O: OpFlag, T> SemigroupT<O, T> for Semigroup<O, T> where T: SemigroupElement<O> {}
 }
 
+
 // MARK: QUASIGROUP
 mod quasigroup {
     use super::*;
 
-    pub trait QuasigroupElement<O: OpFlag> = Inverse<O> + PartialEq + Copy;
+    pub trait QuasigroupElement<O: OpFlag> = Inverse<O> + PartialEq;
 
     pub struct Quasigroup<O: OpFlag, T>
     where T: QuasigroupElement<O>
@@ -195,7 +199,7 @@ mod quasigroup {
 mod monoid {
     use super::*;
 
-    pub trait MonoidElement<O: OpFlag> = Identity<O> + Associative<O> + PartialEq + Copy;
+    pub trait MonoidElement<O: OpFlag> = Identity<O> + Associative<O> + PartialEq;
 
     pub struct Monoid<O: OpFlag, T>
     where T: MonoidElement<O>
@@ -208,7 +212,7 @@ mod monoid {
     where T: MonoidElement<O>
     {
         fn try_new(set: Rc<dyn SetT<T>>) -> Result<Self, &'static str> {
-            assert!(set.contains(T::identity()));
+            assert!(set.contains(&T::identity()));
             Ok(Monoid { set, _boo: PhantomData })
         }
 
@@ -230,7 +234,7 @@ mod monoid {
         }
 
         fn is_submonoid_of(&self, other: &dyn MonoidT<O, T>) -> bool {
-            other.get_set().contains(T::identity()) && self.is_submagma_of(other)
+            other.get_set().contains(&T::identity()) && self.is_submagma_of(other)
         }  
     }
 
@@ -252,7 +256,7 @@ mod monoid {
 mod group {
     use super::*;
 
-    pub trait GroupElement<O:OpFlag> = Inverse<O> + Identity<O> + Associative<O> + PartialEq + Copy;
+    pub trait GroupElement<O:OpFlag> = Inverse<O> + Identity<O> + Associative<O> + PartialEq + Clone;
 
     pub struct Group<O: OpFlag, T>
     where T: GroupElement<O>
@@ -265,7 +269,7 @@ mod group {
     where T: GroupElement<O>
     {
         fn try_new(set: Rc<dyn SetT<T>>) -> Result<Self, &'static str> {
-            assert!(set.contains(T::identity()));
+            assert!(set.contains(&T::identity()));
             Ok(Group { set, _boo: PhantomData })
         }
 
@@ -294,10 +298,10 @@ mod group {
         }
 
         fn order_of_element(&self, element: T) -> usize {
-            let mut cur = element;
+            let mut cur = element.clone();
             let mut count = 1;
             while cur != T::identity() {
-                cur = cur.op(element);
+                cur = cur.op(element.clone());
                 count += 1;
             }
             count

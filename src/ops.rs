@@ -24,14 +24,14 @@ impl<T> Op<ADD> for T where T: Add<Output=T> + Copy {
 }
 
 impl<T> Op<MUL> for T where T: Mul<Output=T> + Copy{
-    fn op(&self, other: Self) -> Self {
+       fn op(&self, other: Self) -> Self {
         self.mul(other)
     }
 }
 
 pub trait Associative<O: OpFlag> : Op<O> {
     fn repeated_op(&self, n: NonZero<usize>) -> Self 
-    where Self: Copy
+    where Self: Copy,
     {
         let mut n = n.get();
         let mut mult = *self;
@@ -40,10 +40,10 @@ pub trait Associative<O: OpFlag> : Op<O> {
 
         while n > 0 {
             if n & 1 == 1 {
-                result = result.op(mult);
+                result = result.op(mult.clone());
             }
             n /= 2;
-            mult = mult.op(mult);
+            mult = mult.op(mult.clone());
         }
 
         result

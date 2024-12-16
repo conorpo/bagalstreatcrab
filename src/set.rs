@@ -1,4 +1,4 @@
-pub mod cardinality {
+mod cardinality {
     use std::cmp::Ordering;
     use std::fmt::{self, Display, Formatter};
     
@@ -40,11 +40,11 @@ pub mod cardinality {
     
 }
 
-use cardinality::*;
+pub use cardinality::*;
 use std::collections::HashSet;
 
 pub trait SetT<T> {
-    fn contains(&self, element: T) -> bool;
+    fn contains(&self, element: &T) -> bool;
     fn is_empty(&self) -> bool {
         false
     }
@@ -90,8 +90,8 @@ mod small_set {
     }
     
     impl<T: Eq> SetT<T> for FiniteSet<T> {
-        fn contains(&self, element: T) -> bool {
-            self.elements.contains(&element)
+        fn contains(&self, element: &T) -> bool {
+            self.elements.contains(element)
         }
 
         fn is_empty(&self) -> bool {
@@ -121,9 +121,9 @@ mod predicate_set {
         }
     }
     
-    impl<T> SetT<T> for PredicateSet<T> {
-        fn contains(&self, element: T) -> bool {
-            (self.predicate)(element)
+    impl<T: Clone> SetT<T> for PredicateSet<T> {
+        fn contains(&self, element: &T) -> bool {
+            (self.predicate)(element.clone())
         }
 
         fn is_empty(&self) -> bool {
@@ -143,7 +143,7 @@ mod hash_set {
     use std::hash::Hash;
 
     impl<T: Eq + Hash> SetT<T> for HashSet<T>{
-        fn contains(&self, element: T) -> bool {
+        fn contains(&self, element: &T) -> bool {
             self.contains(&element)
         }
 
@@ -172,7 +172,7 @@ mod universe {
     }
 
     impl<T: Eq> SetT<T> for Universe<T> {
-        fn contains(&self, _element: T) -> bool {
+        fn contains(&self, _element: &T) -> bool {
             true
         }
 
@@ -195,15 +195,15 @@ mod tests {
     #[test]
     fn test_small_set() {
         let set = small_set::FiniteSet::new(vec![1, 2, 3]);
-        assert!(set.contains(1));
-        assert!(!set.contains(4));
+        assert!(set.contains(&1));
+        assert!(!set.contains(&4));
     }
 
     #[test]
     fn test_predicate_set() {
         let set = predicate_set::PredicateSet::new(Box::new(|x| x % 2 == 0), Some(false));
-        assert!(set.contains(2));
-        assert!(!set.contains(3));
+        assert!(set.contains(&2));
+        assert!(!set.contains(&3));
     }
 
     #[test]
@@ -212,14 +212,14 @@ mod tests {
         set.insert(1);
         set.insert(2);
         set.insert(3);
-        assert!(SetT::contains(&set, 1));
-        assert!(!SetT::contains(&set, 4));
+        assert!(SetT::contains(&set, &1));
+        assert!(!SetT::contains(&set, &4));
     }
 
     #[test]
     fn test_universe() {
         let set = UniversalSet::new(Cardinality::Infinite);
-        assert!(set.contains(1));
+        assert!(set.contains(&1));
         //assert!(set.contains("test"));
     }
 }
